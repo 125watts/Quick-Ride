@@ -1,0 +1,70 @@
+  Gestion des Véhicules dans QuickRide
+===================================
+
+1. Stockage des Véhicules
+------------------------
+Dans la Base de Données :
+- Les véhicules sont stockés dans la table 'vehicules'
+- Chaque véhicule possède :
+  * Un identifiant unique (id)
+  * Un type (Taxi ou Bateau)
+  * Une localisation
+  * Un statut (disponible ou occupé)
+
+Dans l'Application :
+- Les véhicules sont gérés via deux collections :
+  * Set<Vehicule> availableVehicules : contient les véhicules disponibles
+  * Set<Vehicule> notAvailableVehicules : contient les véhicules en service
+
+2. Gestion des Demandes de Transport
+----------------------------------
+Processus de demande :
+- Les demandes sont stockées dans une file d'attente (Queue<ClientRequest>)
+- Chaque demande contient :
+  * L'ID du client
+  * La localisation demandée
+  * L'heure de la demande
+
+Enregistrement des demandes :
+- Les demandes sont enregistrées dans la table 'requetes'
+- Chaque requête est marquée avec le statut 'en_attente'
+- L'heure de la demande est automatiquement enregistrée
+
+3. Attribution des Véhicules
+---------------------------
+Processus d'attribution :
+1. Vérification de la file d'attente
+2. Recherche d'un véhicule disponible dans la localisation demandée
+3. Si un véhicule est trouvé :
+   - Le véhicule est retiré de availableVehicules
+   - Ajouté à notAvailableVehicules
+   - Le statut est mis à jour dans la base de données
+   - Une attribution est créée dans la table 'attributions'
+
+4. Mise à Jour des Statuts
+-------------------------
+Dans la Base de Données :
+- Table 'vehicules' : mise à jour du statut (disponible/occupé)
+- Table 'requetes' : mise à jour du statut (en_attente/attribuée/annulée)
+- Table 'attributions' : enregistrement des attributions avec horodatage
+
+Dans l'Application :
+- Synchronisation continue entre les collections en mémoire et la base de données
+- Gestion des transactions pour garantir l'intégrité des données
+- Rollback automatique en cas d'erreur
+
+5. Annulation de Course
+----------------------
+Processus d'annulation :
+1. Recherche de la course active du client
+2. Mise à jour du statut du véhicule à 'disponible'
+3. Mise à jour du statut de la requête à 'annulée'
+4. Suppression de l'attribution
+5. Déplacement du véhicule de notAvailableVehicules vers availableVehicules
+
+6. Sécurité et Intégrité
+-----------------------
+- Utilisation de transactions pour garantir la cohérence des données
+- Gestion des erreurs avec rollback automatique
+- Vérifications de sécurité avant chaque opération
+- Synchronisation bidirectionnelle entre l'application et la base de données 
